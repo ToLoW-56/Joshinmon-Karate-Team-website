@@ -198,29 +198,83 @@
 
 
 
-<section class="trial-section">
-  <div class="container">
-    <div class="trial-card">
-      <div class="trial-text">
-        <h2>Запишитесь на <span class="highlight">бесплатных</span> три тренировки</h2>
-        <p>Попробуйте себя в карате Джошинмон! Мы подберем подходящую группу по возрасту и уровню подготовки.</p>
-        <ul class="trial-benefits">
-          <li>✓ Индивидуальный подход к новичкам</li>
-          <li>✓ Занятия для детей от 4 лет и взрослых</li>
-          <li>✓ Экипировка на первое занятие не требуется</li>
-        </ul>
-      </div>
-      <form class="trial-form" id="trialForm">
-        <input type="text" placeholder="Ваше имя" required>
-        <input type="tel" placeholder="Номер телефона" required>
-        <select required>
-          <option value="" disabled selected>Выберите группу</option>
-          <option value="kids">Дети (4–7 лет)</option>
-          <option value="juniors">Подростки (8–14 лет)</option>
-          <option value="adults">Взрослые (15+ лет)</option>
-        </select>
-        <button type="submit" class="btn-primary">Записаться бесплатно</button>
-      </form>
-    </div>
-  </div>
-</section>
+
+<!-- HTML-форма -->
+<form id="trialForm">
+  <input type="text" id="userName" placeholder="Ваше ім'я" required>
+  <input type="tel" id="userPhone" placeholder="Номер телефону" required>
+  <select id="userGroup" required>
+    <option value="" disabled selected>Оберіть групу</option>
+    <option value="Діти (4–7 років)">Діти (4–7 років)</option>
+    <option value="Підлітки (8–14 років)">Підлітки (8–14 років)</option>
+    <option value="Дорослі (15+ років)">Дорослі (15+ років)</option>
+  </select>
+  <button type="submit" id="submitBtn">Записатися безкоштовно</button>
+  <div id="formStatus" style="margin-top: 10px;"></div>
+</form>
+
+<script>
+// 1. Вставте сюди ваші дані з Кроків 1 та 2
+const BOT_TOKEN = '8995881289:AAE9EWjJndRpjt2NmyOOSMqDjmSatSn6L9s'; 
+const CHAT_ID = '5039842974';              
+
+const form = document.getElementById('trialForm');
+const statusDiv = document.getElementById('formStatus');
+const submitBtn = document.getElementById('submitBtn');
+
+form.addEventListener('submit', async function(e) {
+  e.preventDefault(); // Запобігаємо перезавантаженню сторінки
+
+  // Збираємо дані з полів
+  const name = document.getElementById('userName').value.trim();
+  const phone = document.getElementById('userPhone').value.trim();
+  const group = document.getElementById('userGroup').value;
+
+  // Формуємо текст повідомлення для Telegram
+  const message = `
+<b>🥋 Нова заявка на тренування!</b>
+
+👤 <b>Ім'я:</b> ${name}
+📞 <b>Телефон:</b> ${phone}
+👥 <b>Група:</b> ${group}
+  `;
+
+  // Блокуємо кнопку на час відправки
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Надсилання...';
+  statusDiv.textContent = '';
+
+  try {
+    // Надсилаємо POST-запит у Telegram API
+    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: message,
+        parse_mode: 'HTML'
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.ok) {
+      statusDiv.style.color = '#28a745';
+      statusDiv.textContent = '✅ Заявку успішно надіслано! Ми зв\'яжемося з вами.';
+      form.reset(); // Очищаємо форму
+    } else {
+      throw new Error(result.description);
+    }
+  } catch (error) {
+    statusDiv.style.color = '#dc3545';
+    statusDiv.textContent = '❌ Помилка під час надсилання. Спробуйте ще раз або зателефонуйте нам.';
+    console.error('Telegram API Error:', error);
+  } finally {
+    // Повертаємо кнопку в початковий стан
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Записатися безкоштовно';
+  }
+});
+</script>
